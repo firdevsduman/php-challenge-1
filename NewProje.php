@@ -1,5 +1,7 @@
 <?php
 
+echo "hello";
+
 $row = 0;
 /* input dosyasını okuyoruz.*/
 if (($handle = fopen("input.txt", "r")) == TRUE) {
