@@ -1,5 +1,6 @@
 <?php
 
+
 # değişkenleri, sabitleri tanımla
 $inboxPath = __DIR__ . '/data/tmp';
 $outboxPath = __DIR__ . '/data/out';
@@ -42,7 +43,16 @@ foreach ($filePathList as $filePath) {
         }
 
         if ($i > 2) {
-            $xmlArray['order']['lines'][] = array_combine($fileLines[2], $fileLines[$i]);
+            $line = array_combine($fileLines[2], $fileLines[$i]);
+
+            if (
+                !empty($line['itemDescription'])
+                && !empty($line['price'])
+                && substr_count($line['price'], ',') < 2
+                && 0 !== strpos($line['price'], ',')
+            ) {
+                $xmlArray['order']['lines'][] = $line;
+            }
         }
     }
 
@@ -50,25 +60,17 @@ foreach ($filePathList as $filePath) {
     $xml = new SimpleXMLElement('<order/>');
 
     $header = $xml->addChild('header');
-    $header->addChild('type', $xmlArray['order']['header']['type']);
-    $header->addChild('no', $xmlArray['order']['header']['no']);
-    $header->addChild('dateCreated', $xmlArray['order']['header']['dateCreated']);
-    $header->addChild('dateSend', $xmlArray['order']['header']['dateSend']);
-    $header->addChild('version', $xmlArray['order']['header']['version']);
+    foreach ($xmlArray['order']['header'] as $key => $value) {
+        $header->addChild($key, $value);
+    }
 
     $lines = $xml->addChild('lines');
-
     array_map(
         function ($item) use ($lines) {
             $line = $lines->addChild('line');
-            $line->addChild('line_no', $item['line_no']);
-            $line->addChild('itemCode', $item['itemCode']);
-            $line->addChild('itemDescription', $item['itemDescription']);
-            $line->addChild('price', $item['price']);
-            $line->addChild('quantityPerPack', $item['quantityPerPack']);
-            $line->addChild('orderedQuantity', $item['orderedQuantity']);
-            $line->addChild('unitOfMeasure', $item['unitOfMeasure']);
-            $line->addChild('deliveryDateLatest', $item['deliveryDateLatest']);
+            foreach ($item as $key => $value) {
+                $line->addChild($key, $value);
+            }
         },
         $xmlArray['order']['lines']
     );
